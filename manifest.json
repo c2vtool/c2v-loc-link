@@ -1,0 +1,51 @@
+{
+  "manifest_version": 3,
+  "name": "C2V Lọc Link",
+  "short_name": "Lọc Link",
+  "version": "1.0.1",
+  "description": "Gom và lọc link video Instagram Reel / Facebook để dán vào C2V Download.",
+  "action": {
+    "default_title": "C2V Lọc Link",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon.png"
+    }
+  },
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.instagram.com/*",
+        "*://instagram.com/*",
+        "*://*.facebook.com/*",
+        "*://facebook.com/*",
+        "*://*.fb.com/*",
+        "*://fb.watch/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "permissions": [
+    "storage",
+    "activeTab",
+    "tabs"
+  ],
+  "host_permissions": [
+    "*://*.instagram.com/*",
+    "*://instagram.com/*",
+    "*://*.facebook.com/*",
+    "*://facebook.com/*",
+    "*://*.fb.com/*",
+    "*://fb.watch/*"
+  ]
+}

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>C2V Lọc Link</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="app">
+    <header class="hero">
+      <div class="brand">C2V Lọc Link</div>
+      <p class="tagline">Gom link Instagram Reel &amp; Facebook — copy dán vào C2V</p>
+      <div class="site" id="siteBadge">Đang kiểm tra trang…</div>
+    </header>
+
+    <section class="panel">
+      <div class="steps">
+        <span>1. Mở Reels / Watch</span>
+        <span>2. Cuộn trang</span>
+        <span>3. Copy</span>
+      </div>
+
+      <div class="filters" id="filters">
+        <button type="button" class="chip active" data-mode="all">Tất cả video</button>
+        <button type="button" class="chip" data-mode="ig">Instagram</button>
+        <button type="button" class="chip" data-mode="ig_reel">IG Reel</button>
+        <button type="button" class="chip" data-mode="fb">Facebook</button>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <strong id="countShow">0</strong>
+          <span>đang hiện</span>
+        </div>
+        <div class="stat">
+          <strong id="countTotal">0</strong>
+          <span>đã gom</span>
+        </div>
+      </div>
+
+      <textarea id="out" readonly placeholder="Cuộn trang Instagram / Facebook rồi bấm Làm mới…"></textarea>
+
+      <div class="actions">
+        <button type="button" id="btnRefresh" class="btn primary">Làm mới</button>
+        <button type="button" id="btnCopy" class="btn primary" disabled>Copy</button>
+        <button type="button" id="btnClear" class="btn ghost" disabled>Xóa</button>
+      </div>
+
+      <p id="status" class="status"></p>
+    </section>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
