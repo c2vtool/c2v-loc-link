@@ -10,7 +10,7 @@
   <div class="app">
     <header class="hero">
       <div class="brand">C2V Lọc Link</div>
-      <p class="tagline">Gom link Instagram Reel &amp; Facebook — copy dán vào C2V</p>
+      <p class="tagline">Gom link Instagram Reel &amp; Facebook — lọc view rồi copy dán vào C2V</p>
       <div class="site" id="siteBadge">Đang kiểm tra trang…</div>
     </header>
 
@@ -18,14 +18,32 @@
       <div class="steps">
         <span>1. Mở Reels / Watch</span>
         <span>2. Cuộn trang</span>
-        <span>3. Copy</span>
+        <span>3. Lọc &amp; Copy</span>
       </div>
 
       <div class="filters" id="filters">
         <button type="button" class="chip active" data-mode="all">Tất cả video</button>
         <button type="button" class="chip" data-mode="ig">Instagram</button>
-        <button type="button" class="chip" data-mode="ig_reel">IG Reel</button>
         <button type="button" class="chip" data-mode="fb">Facebook</button>
+      </div>
+
+      <div class="ig-tools" id="igTools">
+        <div class="tool-row">
+          <label for="minViews" id="minMetricLabel">View tối thiểu</label>
+          <input type="text" id="minViews" placeholder="vd: 10k / 100000" autocomplete="off">
+        </div>
+        <div class="tool-row">
+          <label for="sortBy">Sắp xếp</label>
+          <select id="sortBy">
+            <option value="views_desc">View cao → thấp</option>
+            <option value="views_asc">View thấp → cao</option>
+            <option value="url">Theo link</option>
+          </select>
+        </div>
+        <div class="tool-row check">
+          <label><input type="checkbox" id="onlyWithViews"> <span id="onlyMetricLabel">Chỉ link có view</span></label>
+          <label><input type="checkbox" id="showMeta" checked> Hiện số liệu</label>
+        </div>
       </div>
 
       <div class="stats">
@@ -50,6 +68,7 @@
       <p id="status" class="status"></p>
     </section>
   </div>
+  <script src="counts.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

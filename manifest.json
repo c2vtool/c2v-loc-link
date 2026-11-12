@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "C2V Lọc Link",
   "short_name": "Lọc Link",
-  "version": "1.0.1",
-  "description": "Gom và lọc link video Instagram Reel / Facebook để dán vào C2V Download.",
+  "version": "1.3.23",
+  "description": "Gom link Instagram/Facebook, xếp lưới Reels theo view trên IG & FB, copy dán C2V.",
   "action": {
     "default_title": "C2V Lọc Link",
     "default_popup": "popup.html",
@@ -31,7 +31,7 @@
         "*://*.fb.com/*",
         "*://fb.watch/*"
       ],
-      "js": ["content.js"],
+      "js": ["counts.js", "content.js", "ig_toolbar.js", "fb_toolbar.js"],
       "run_at": "document_idle"
     }
   ],

@@ -1,31 +1,63 @@
 # C2V Lọc Link
 
-Extension Chrome / Edge: gom link video **Instagram Reel** và **Facebook** khi bạn cuộn trang, rồi copy dán vào phần mềm **C2V Download**.
+Extension Chrome / Edge giúp gom link video **Instagram Reel** và **Facebook**, xếp lưới Reels theo lượt xem ngay trên trang **IG & FB**, rồi copy dán vào **C2V Download**.
 
 ## Cài đặt (Load unpacked)
 
-1. Tải repo này (nút xanh **Code** → **Download ZIP**) và giải nén.
-2. Mở trình duyệt → vào `chrome://extensions` (Chrome) hoặc `edge://extensions` (Edge).
-3. Bật **Developer mode** (Chế độ dành cho nhà phát triển).
-4. Bấm **Load unpacked** / **Tải tiện ích đã giải nén**.
-5. Chọn thư mục vừa giải nén (chỗ có file `manifest.json`).
+1. Tải repo (nút xanh **Code** → **Download ZIP**) và giải nén.
+2. Mở `chrome://extensions` (Chrome) hoặc `edge://extensions` (Edge).
+3. Bật **Developer mode**.
+4. Bấm **Load unpacked** → chọn thư mục có file `manifest.json`.
+
+Đã cài bản cũ: vào trang extension → **Reload**.
 
 ## Cách dùng
 
-1. Mở tab **Instagram Reels** hoặc **Facebook Watch / Reel**.
-2. Cuộn chậm để extension gom link video.
-3. Bấm icon **C2V Lọc Link** trên thanh công cụ.
-4. Bấm **Làm mới** → **Copy** → dán vào C2V Download.
+1. Mở trang kênh **Instagram** hoặc **Facebook** → tab **Reels** (lưới có số view).
+2. Thanh **C2V** hiện trên trang:
+   - **Xếp lưới:** Lượt xem (+ like/comment trên IG) · Tăng / Giảm dần
+   - **Nhịp** — chỉnh tốc độ cuộn
+   - **Chạy lưới** — tự cuộn xuống (bấm lại thành **Dừng**)
+   - **Đầu trang** — nhảy về trên
+3. Cuộn (hoặc bật Chạy lưới) để gom đủ video.
+4. Bấm icon extension → **Làm mới** → lọc view tối thiểu nếu cần → **Copy** → dán C2V.
 
-## Quyền
+**Copy chỉ lấy URL** để dán thẳng vào C2V Download.
+
+## Lọc trong popup
+
+| Tuỳ chọn | Ý nghĩa |
+|---|---|
+| View tối thiểu | Chỉ giữ reel ≥ số view (`10k`, `1.5M`…) |
+| Sắp xếp | View / Like / Comment |
+| Chỉ link có view | Bỏ link chưa đọc được view |
+| Hiện view trong danh sách | Xem trước; Copy vẫn chỉ URL |
+
+Một số layout Instagram không hiện số view trên ô → số có thể = 0; cuộn thêm rồi **Làm mới**.
+
+## Quyền & quyền riêng tư
 
 - Chỉ chạy trên Instagram / Facebook.
-- Lưu danh sách link **trên máy bạn** (`chrome.storage.local`), không gửi server.
-- Không đọc mật khẩu, không lấy cookie đăng nhập.
+- Danh sách link chỉ giữ trong bộ nhớ của từng tab/kênh, không gửi server. Tải lại trang hoặc đổi kênh sẽ gom lại; đóng/mở popup vẫn giữ link đã gom trong tab đó. Cài đặt extension vẫn lưu trên máy.
+- Không đọc mật khẩu hay cookie đăng nhập.
 
 ## Phiên bản
 
-- `1.0.1` — Manifest V3
+- `1.3.23` — Thanh điều khiển IG chỉ hiện ở trang kênh/lưới Reels, không xuất hiện ở trang chủ, Explore, tin nhắn hoặc trang xem từng video; tác vụ chờ không tạo lại thanh sau khi rời kênh.
+- `1.3.22` — Gộp Instagram / IG Reel thành một nút Instagram, hiện toàn bộ link Instagram đã gom.
+- `1.3.21` — Sửa popup bị co thành dải mỏng khi vừa mở do giới hạn chiều cao theo viewport ban đầu của Chrome.
+- `1.3.20` — Thanh cuộn tối màu đồng bộ giao diện; popup vừa chiều cao, luôn hiện Làm mới / Copy / Xóa, chỉ cuộn trong danh sách link.
+- `1.3.19` — Bỏ lựa chọn Like / Bình luận trên cả Instagram, Facebook và popup. Các lựa chọn cũ tự chuyển về View.
+- `1.3.18` — Bỏ danh sách link lưu chung theo tên miền. Mỗi tab/kênh gom riêng, F5 bắt đầu lại, chuyển kênh không trộn link cũ; bỏ quét HTML nhúng có thể chứa dữ liệu trang khác.
+- `1.3.17` — Bỏ lựa chọn Like / Bình luận trên Facebook (thanh lưới và popup); giữ các lựa chọn này cho Instagram. Cài đặt FB cũ tự chuyển về Lượt xem.
+- `1.3.16` — Popup chỉ hiện chỉ số đang chọn: View / Like / Bình luận. Nếu chưa gom được chỉ số đó, ghi rõ chưa có dữ liệu thay vì ghép view vào dòng like/bình luận. Like/bình luận FB chỉ đọc được khi xuất hiện trên từng ô video; không tự mở từng Reel để lấy thêm.
+- `1.3.15` — Popup xếp link chưa có số liệu xuống cuối ở cả hai chiều; khi bật Hiện số liệu, ghi rõ chỉ số chưa có dữ liệu.
+- `1.3.14` — Bộ lọc tối thiểu và Chỉ link có số liệu trong popup đổi theo View / Like / Bình luận đang chọn; thêm sắp xếp bình luận tăng dần.
+- `1.3.13` — Cố định kích thước nút trên thanh FB; đổi tiêu chí, tăng/giảm hoặc Chạy/Dừng không làm các nút dịch chuyển.
+- `1.3.12` — Đổi tiêu chí FB áp dụng ngay; chọn Tắt trả các ô Reels về thứ tự Facebook đã tải trước khi sắp xếp, gồm cả video tải thêm.
+- `1.3.11` — Thêm xếp lưới FB theo lượt thích / bình luận và gom các số này vào popup khi chúng xuất hiện trên từng ô video. Ô không có dữ liệu tương tác được xếp cuối; không suy ra like / bình luận từ view.
+- `1.3.10` — Gom và hiện lượt xem trên ô Reels Facebook trong popup; hỗ trợ lọc view FB và số tiếng Việt như `1,2 triệu`. Link đã gom được bổ sung view khi ô video xuất hiện lại trên trang.
+- `1.3.0` — Thêm xếp lưới Reels trên Facebook (+ IG như trước)
 
 ## Liên hệ
 
