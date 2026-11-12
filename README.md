@@ -43,6 +43,10 @@ Một số layout Instagram không hiện số view trên ô → số có thể 
 
 ## Phiên bản
 
+- `1.3.27` — IG đọc view trong đúng ô video, dừng trước hàng/lưới chung; không lấy số từ caption/ô bên cạnh. Nhận cả ô dùng link /p/ và /tv/ khi xếp lưới; popup và lưới dùng chung cách đọc view.
+- `1.3.26` — Chỉ gom/lọc link trong trang cá nhân/kênh IG hoặc FB. Trang chủ, khám phá và luồng video chung không gom; rời trang cá nhân sẽ xóa danh sách tab và popup hướng dẫn mở kênh.
+- `1.3.25` — IG tạm dừng sắp xếp trong lúc Chạy lưới, xếp lại khi Dừng; đổi tiêu chí sẽ dừng cuộn. Gom link IG giới hạn tần suất để giảm khựng do quét mỗi sự kiện cuộn.
+- `1.3.24` — Sắp xếp IG xuyên suốt các hàng của lưới, gồm video ghim và hàng mới tải thêm; Tắt khôi phục thứ tự gốc, giữ cấu trúc các hàng.
 - `1.3.23` — Thanh điều khiển IG chỉ hiện ở trang kênh/lưới Reels, không xuất hiện ở trang chủ, Explore, tin nhắn hoặc trang xem từng video; tác vụ chờ không tạo lại thanh sau khi rời kênh.
 - `1.3.22` — Gộp Instagram / IG Reel thành một nút Instagram, hiện toàn bộ link Instagram đã gom.
 - `1.3.21` — Sửa popup bị co thành dải mỏng khi vừa mở do giới hạn chiều cao theo viewport ban đầu của Chrome.

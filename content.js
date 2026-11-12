@@ -112,56 +112,14 @@
     return document.querySelector('main, [role="main"]') || document;
   }
 
-  function looksLikeCountText(txt) {
-    if (!txt) return false;
-    var s = String(txt).trim();
-    if (s.length > 18) return false;
-    return /^[\d.,]+\s*[KkMmBbWw万亿]?$/.test(s.replace(/\s/g, ""));
-  }
-
-  function extractCountNear(el) {
-    if (!el) return 0;
-    var best = 0;
-    var nodes = el.querySelectorAll("span, div, time");
-    for (var i = 0; i < nodes.length && i < 40; i++) {
-      var t = (nodes[i].getAttribute("aria-label") || nodes[i].textContent || "").trim();
-      var viewHint = /view|lượt xem|play|xem/i.test(t);
-      var likeHint = /like|thích/i.test(t);
-      var num = t.match(/([\d.,]+\s*[KkMmBbWw万亿]?)/i);
-      if (!num) continue;
-      if (viewHint || looksLikeCountText(t) || looksLikeCountText(num[1])) {
-        var n = parseCount(num[1]);
-        if (n > best && !likeHint) best = n;
-      }
-    }
-    var aria = el.getAttribute && (el.getAttribute("aria-label") || "");
-    if (aria) {
-      var am = aria.match(/([\d.,]+\s*[KkMmBbWw万亿]?)\s*(views?|lượt xem|plays?)/i);
-      if (am) best = Math.max(best, parseCount(am[1]));
-    }
-    return best;
-  }
-
   function harvestIgDomMetrics() {
     if (!isIg) return;
-    collectionRoot().querySelectorAll('a[href*="/reel/"], a[href*="/p/"], a[href*="/tv/"]').forEach(function (a) {
-      var href = a.href || a.getAttribute("href") || "";
-      var url = normalize(href);
+    collectionRoot().querySelectorAll(C2VCounts.igVideoSelector).forEach(function (link) {
+      var url = normalize(link.href || link.getAttribute("href") || "");
       if (!url) return;
-      // leo lên vài cấp để bắt ô grid reel (có số view)
-      var cur = a;
-      for (var i = 0; i < 6 && cur; i++) {
-        var v = extractCountNear(cur);
-        if (v > 0) {
-          add(url, { views: v });
-          break;
-        }
-        cur = cur.parentElement;
-      }
-      // aria trên chính thẻ a
-      var al = a.getAttribute("aria-label") || "";
-      var am = al.match(/([\d.,]+\s*[KkMmBbWw万亿]?)/i);
-      if (am) add(url, { views: am[1] });
+      // Replace the observation for this exact card, rather than preserving a
+      // larger, previously misattributed count from an ancestor or caption.
+      ensureItem(url).views = C2VCounts.igViewsForLink(link);
     });
   }
 
@@ -192,7 +150,13 @@
   }
 
   function harvestDom() {
-    if (killIfDead() || !syncPage()) return;
+    if (killIfDead()) return;
+    if (!C2VCounts.isProfilePage(location.href)) {
+      bag = Object.create(null);
+      syncPage();
+      return;
+    }
+    if (!syncPage()) return;
     try {
       collectionRoot().querySelectorAll("a[href]").forEach(function (a) { add(a.href); });
       collectionRoot().querySelectorAll("[href]").forEach(function (el) {
@@ -250,6 +214,7 @@
             host: host,
             page: location.href,
             platform: isIg ? "instagram" : "facebook",
+            collectionAllowed: C2VCounts.isProfilePage(location.href),
           });
         } catch (e) {}
         return true;
@@ -264,7 +229,11 @@
 
   var harvestTimer = null;
   function scheduleHarvest() {
-    if (!isFb) { harvestDom(); return; }
+    if (!C2VCounts.isProfilePage(location.href)) {
+      bag = Object.create(null);
+      syncPage();
+      return;
+    }
     if (harvestTimer || killIfDead()) return;
     // Throttle rather than debounce so continuous scrolling still collects links.
     harvestTimer = setTimeout(function () {
@@ -288,7 +257,7 @@
       });
     } catch (e) {}
     window.addEventListener("scroll", scheduleHarvest, { passive: true, capture: true });
-    tickTimer = setInterval(harvestDom, isFb ? 5000 : 1500);
+    tickTimer = setInterval(harvestDom, 5000);
   }
 
   if (document.readyState === "loading") {

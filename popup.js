@@ -7,6 +7,7 @@
   var mode = "all";
   var activePlatform = null;
   var refreshSequence = 0;
+  var collectionAllowed = true;
 
   var out = document.getElementById("out");
   var statusEl = document.getElementById("status");
@@ -137,7 +138,7 @@
   }
 
   function syncIgToolsVisibility() {
-    var show = mode === "all" || mode === "ig" || mode === "fb";
+    var show = collectionAllowed && (mode === "all" || mode === "ig" || mode === "fb");
     igTools.style.display = show ? "" : "none";
   }
 
@@ -197,6 +198,14 @@
         return;
       }
       setBadge(tab.url, null);
+      collectionAllowed = C2VCounts.isProfilePage(tab.url || "");
+      if (!collectionAllowed) {
+        allItems = [];
+        render();
+        siteBadge.textContent = "Chỉ gom link trong trang cá nhân";
+        setStatus("Mở trang cá nhân/kênh của một người rồi cuộn để gom link.", "warn");
+        return;
+      }
 
       var fromMsg = null;
       var platform = null;

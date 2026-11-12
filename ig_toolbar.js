@@ -12,9 +12,9 @@
   var STORE_KEY = "c2v_reel_panel";
   var settings = { metric: "views", order: "desc", pace: 12 };
   var resortDelay = null;
+  var originalOrders = new WeakMap();
   var routeKey = "";
   var feedRaf = null;
-  var feedResortTimer = null;
   var feedOn = false;
   var feedAcc = 0;
   var feedLastTs = 0;
@@ -38,22 +38,7 @@
     "</svg>";
 
   function toNumber(raw) {
-    if (raw == null || raw === "") return 0;
-    if (typeof raw === "number" && isFinite(raw)) return Math.max(0, Math.floor(raw));
-    var s = String(raw).trim().replace(/,/g, "").replace(/\s+/g, "");
-    if (!s) return 0;
-    var m = s.match(/^([\d.]+)\s*([KkMmBbWw万亿])?/i);
-    if (!m) {
-      var digits = s.replace(/[^\d]/g, "");
-      return digits ? parseInt(digits, 10) || 0 : 0;
-    }
-    var n = parseFloat(m[1]);
-    if (!isFinite(n)) return 0;
-    var u = (m[2] || "").toUpperCase();
-    if (u === "K" || u === "W" || u === "万") n *= 1e3;
-    else if (u === "M" || u === "亿") n *= 1e6;
-    else if (u === "B") n *= 1e9;
-    return Math.max(0, Math.floor(n));
+    return C2VCounts.parse(raw);
   }
 
   function extAlive() {
@@ -121,17 +106,15 @@
   }
 
   function haltFeed() {
+    var wasRunning = feedOn;
     feedOn = false;
     if (feedRaf) {
       try { cancelAnimationFrame(feedRaf); } catch (e) {}
       feedRaf = null;
     }
-    if (feedResortTimer) {
-      clearInterval(feedResortTimer);
-      feedResortTimer = null;
-    }
     feedAcc = 0;
     feedLastTs = 0;
+    if (wasRunning && isProfileGridPage()) queueResort();
     var btn = document.getElementById("c2v-feed-btn");
     if (!btn) return;
     btn.classList.remove("on");
@@ -141,6 +124,8 @@
 
   function runFeed() {
     haltFeed();
+    if (resortDelay) clearTimeout(resortDelay);
+    resortDelay = null;
     feedOn = true;
     var btn = document.getElementById("c2v-feed-btn");
     if (btn) {
@@ -148,7 +133,7 @@
       btn.innerHTML = SVG_FEED_STOP + '<span class="lbl">Dừng</span>';
       btn.title = "Dừng cuộn";
     }
-    var stuck = 0;
+    var stuckSince = null;
     feedAcc = 0;
     feedLastTs = 0;
 
@@ -166,29 +151,26 @@
         var root = document.scrollingElement || document.documentElement;
         var before = window.scrollY || root.scrollTop || 0;
         try {
-          root.scrollTop = before + step;
+          root.scrollTo({ top: before + step, behavior: "instant" });
         } catch (e) {
           window.scrollBy(0, step);
         }
         var after = window.scrollY || root.scrollTop || 0;
         var bottom = after + window.innerHeight >= (root.scrollHeight || 0) - 8;
         if (bottom || after <= before) {
-          stuck++;
-          if (stuck >= 90) {
+          if (stuckSince === null) stuckSince = ts;
+          if (ts - stuckSince >= 3000) {
             haltFeed();
             return;
           }
         } else {
-          stuck = 0;
+          stuckSince = null;
         }
       }
       feedRaf = requestAnimationFrame(tick);
     }
 
     feedRaf = requestAnimationFrame(tick);
-    feedResortTimer = setInterval(function () {
-      if (feedOn) queueResort();
-    }, 1600);
   }
 
   function toggleFeed() {
@@ -261,7 +243,7 @@
       if (next) return next;
       return wrap || tabs;
     }
-    var link = document.querySelector('a[href*="/reel/"]');
+    var link = document.querySelector(C2VCounts.igVideoSelector);
     if (link) {
       var cell = link.closest("div") || link;
       return findGrid(cell) || cell;
@@ -327,6 +309,7 @@
   }
 
   function onSettingChange() {
+    if (feedOn) haltFeed();
     var panel = document.getElementById(PANEL_ID);
     if (!panel) return;
     settings.metric = panel.querySelector("#c2v-metric").value;
@@ -335,94 +318,88 @@
     queueResort();
   }
 
+  function rowTiles(row) {
+    return Array.prototype.filter.call(row.children, function (child) {
+      return C2VCounts.igVideoIds(child).size === 1;
+    });
+  }
+
   function findGrid(fromEl) {
     var el = fromEl;
     for (var d = 0; d < 10 && el; d++) {
       var parent = el.parentElement;
       if (!parent) break;
-      var count = 0;
-      for (var i = 0; i < parent.children.length; i++) {
-        var kid = parent.children[i];
-        if (kid.querySelector && kid.querySelector('a[href*="/reel/"]')) count++;
-      }
-      if (count >= 3) return parent;
+      if (rowTiles(parent).length >= 2) return parent;
       el = parent;
     }
     return null;
   }
 
-  function scoreCell(cell, metric) {
-    var text = (cell.getAttribute("aria-label") || "") + " " + (cell.innerText || cell.textContent || "");
-    text = text.replace(/\s+/g, " ").trim();
-    if (metric === "likes") {
-      var lm = text.match(/([\d.,]+\s*[KkMmBbWw万亿]?)\s*(likes?|lượt thích|thích)/i);
-      if (lm) return toNumber(lm[1]);
-    }
-    if (metric === "comments") {
-      var cm = text.match(/([\d.,]+\s*[KkMmBbWw万亿]?)\s*(comments?|bình luận|comment)/i);
-      if (cm) return toNumber(cm[1]);
-    }
-    var vm = text.match(/([\d.,]+\s*[KkMmBbWw万亿]?)\s*(views?|lượt xem|plays?)/i);
-    if (vm) return toNumber(vm[1]);
-    var best = 0;
-    var re = /([\d.,]+\s*[KkMmBbWw万亿]?)/gi;
-    var m;
-    while ((m = re.exec(text))) {
-      var n = toNumber(m[1]);
-      if (n >= 10 && n > best) best = n;
-    }
-    return best;
+  function scoreCell(cell) {
+    return C2VCounts.igViews(cell);
   }
 
   function collectTiles() {
-    var links = Array.prototype.slice.call(document.querySelectorAll('a[href*="/reel/"]'));
-    links = links.filter(function (a) {
-      var href = a.getAttribute("href") || "";
-      return /\/reel\/[A-Za-z0-9_-]+/i.test(href) && !/\/reels\/?$/i.test(href);
+    var root = document.querySelector('main, [role="main"]') || document;
+    var links = Array.prototype.slice.call(root.querySelectorAll(C2VCounts.igVideoSelector)).filter(function (link) {
+      return !!C2VCounts.igVideoId(link);
     });
     if (!links.length) return { grid: null, tiles: [] };
-    var sample = links[Math.min(3, links.length - 1)];
+    var sample = links[0];
     var grid = findGrid(sample);
     if (!grid) return { grid: null, tiles: [] };
-    var tiles = [];
-    for (var i = 0; i < grid.children.length; i++) {
-      var child = grid.children[i];
-      if (child.querySelector && child.querySelector('a[href*="/reel/"]')) tiles.push(child);
-    }
-    if (tiles.length < 2) {
-      tiles = links.map(function (a) { return a.closest("div") || a; });
-      var seen = [];
-      tiles = tiles.filter(function (c) {
-        if (seen.indexOf(c) >= 0) return false;
-        seen.push(c);
-        return true;
+    var tiles = rowTiles(grid);
+    // IG often wraps each visual row separately. Sorting only this first row
+    // leaves million-view reels ahead of smaller counts in subsequent rows.
+    if (grid.parentElement) {
+      var rows = Array.prototype.filter.call(grid.parentElement.children, function (row) {
+        return row.tagName === grid.tagName && row.className === grid.className && rowTiles(row).length > 0;
       });
-      grid = tiles[0] && tiles[0].parentElement;
+      if (rows.length > 1 && rows.indexOf(grid) >= 0) {
+        grid = grid.parentElement;
+        tiles = [];
+        rows.forEach(function (row) { tiles = tiles.concat(rowTiles(row)); });
+      }
     }
     return { grid: grid, tiles: tiles };
   }
 
   function resortGrid() {
+    if (feedOn || !isProfileGridPage()) return;
     var panel = ensurePanel();
     if (!panel) return;
     if (!document.body.contains(panel)) {
       try { panel.remove(); } catch (e) {}
       panel = ensurePanel();
     }
-    if ((settings.metric || "off") === "off") return;
-
     var pack = collectTiles();
     var grid = pack.grid;
     var tiles = pack.tiles;
     if (!grid || tiles.length < 2) return;
 
     var metric = settings.metric;
+    var original = originalOrders.get(grid);
+    if (!original) {
+      if (metric === "off") return;
+      original = { positions: new Map(), next: 0 };
+      originalOrders.set(grid, original);
+    }
+    function tileKey(tile) {
+      return Array.from(C2VCounts.igVideoIds(tile))[0] || tile;
+    }
+    tiles.forEach(function (tile) {
+      var key = tileKey(tile);
+      if (!original.positions.has(key)) original.positions.set(key, original.next++);
+    });
     var desc = (settings.order || "desc") === "desc";
     var ranked = tiles.map(function (tile, idx) {
-      return { tile: tile, idx: idx, score: scoreCell(tile, metric) };
+      return { tile: tile, idx: idx, original: original.positions.get(tileKey(tile)), score: metric === "off" ? 0 : scoreCell(tile, metric) };
     });
     ranked.sort(function (a, b) {
-      if (a.score === b.score) return a.idx - b.idx;
+      if (metric === "off") return a.original - b.original || a.idx - b.idx;
+      if (!a.score && b.score) return 1;
+      if (a.score && !b.score) return -1;
+      if (a.score === b.score) return a.original - b.original || a.idx - b.idx;
       return desc ? b.score - a.score : a.score - b.score;
     });
 
@@ -433,31 +410,32 @@
         break;
       }
     }
-    if (!changed) return;
-
-    var frag = document.createDocumentFragment();
-    ranked.forEach(function (x) { frag.appendChild(x.tile); });
-    var extra = [];
-    for (var j = 0; j < grid.children.length; j++) {
-      var ch = grid.children[j];
-      if (tiles.indexOf(ch) < 0) extra.push(ch);
+    if (changed) {
+      var slots = tiles.map(function (tile) {
+        var slot = document.createComment("c2v-ig-slot");
+        var parent = tile.parentNode;
+        parent.replaceChild(slot, tile);
+        return { parent: parent, node: slot };
+      });
+      ranked.forEach(function (x, idx) { slots[idx].parent.replaceChild(x.tile, slots[idx].node); });
     }
-    grid.appendChild(frag);
-    extra.forEach(function (n) { grid.appendChild(n); });
+    if (metric === "off") originalOrders.delete(grid);
   }
 
   function queueResort() {
+    if (feedOn) return;
     if (resortDelay) clearTimeout(resortDelay);
     if (!isProfileGridPage()) {
       resortDelay = null;
       return;
     }
-    resortDelay = setTimeout(resortGrid, feedOn ? 900 : 250);
+    resortDelay = setTimeout(resortGrid, 250);
   }
 
   function heartbeat() {
     var path = location.pathname || "";
     if (path !== routeKey) {
+      originalOrders = new WeakMap();
       routeKey = path;
       haltFeed();
       var old = document.getElementById(PANEL_ID);
@@ -471,7 +449,7 @@
       if (orphan) orphan.remove();
       return;
     }
-    if (document.querySelector('a[href*="/reel/"]')) {
+    if (document.querySelector(C2VCounts.igVideoSelector)) {
       ensurePanel();
       queueResort();
     }

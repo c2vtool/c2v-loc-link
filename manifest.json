@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "C2V Lọc Link",
   "short_name": "Lọc Link",
-  "version": "1.3.23",
+  "version": "1.3.27",
   "description": "Gom link Instagram/Facebook, xếp lưới Reels theo view trên IG & FB, copy dán C2V.",
   "action": {
     "default_title": "C2V Lọc Link",

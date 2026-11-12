@@ -85,5 +85,63 @@
     return bestLabel || bestCompact || bestPlain;
   }
 
-  globalThis.C2VCounts = { parse: parse, fbEngagement: fbEngagement, fbViews: fbViews };
+  var IG_VIDEO_SELECTOR = 'a[href*="/reel/"], a[href*="/p/"], a[href*="/tv/"]';
+
+  function igVideoId(link) {
+    try {
+      var url = new URL(link.getAttribute("href") || link.href || "", "https://www.instagram.com/");
+      if (!/^(www\.)?(instagram\.com|instagr\.am)$/i.test(url.hostname)) return "";
+      var match = url.pathname.match(/\/(?:reel|p|tv)\/([A-Za-z0-9_-]+)/i);
+      return match ? match[1] : "";
+    } catch (e) { return ""; }
+  }
+
+  function igVideoIds(el) {
+    var links = Array.prototype.slice.call(el.querySelectorAll(IG_VIDEO_SELECTOR));
+    if (el.matches(IG_VIDEO_SELECTOR)) links.unshift(el);
+    var ids = new Set();
+    links.forEach(function (link) { var id = igVideoId(link); if (id) ids.add(id); });
+    return ids;
+  }
+
+  function igViews(el) {
+    // A row or entire grid must never supply a count for one video.
+    if (igVideoIds(el).size !== 1) return 0;
+    return fbViews(el);
+  }
+
+  function igViewsForLink(link) {
+    var id = igVideoId(link);
+    if (!id) return 0;
+    for (var el = link, depth = 0; el && depth < 8; el = el.parentElement, depth++) {
+      if (/^(MAIN|BODY|HTML)$/.test(el.tagName) || el.querySelector('header, [role="tablist"]')) break;
+      var ids = igVideoIds(el);
+      if (ids.size !== 1 || !ids.has(id)) break;
+      var views = fbViews(el);
+      if (views > 0) return views;
+    }
+    return 0;
+  }
+
+  function isProfilePage(href) {
+    try {
+      var url = new URL(href);
+      var host = url.hostname.replace(/^(www|m|web)\./i, "").toLowerCase();
+      var path = url.pathname.replace(/\/+$/, "");
+      if (host === "instagram.com" || host === "instagr.am") {
+        var ig = path.match(/^\/([A-Za-z0-9._]+)(?:\/(reels|tagged))?$/i);
+        return !!ig && !/^(accounts|about|api|direct|explore|reels|reel|p|tv|stories|developer|developers|legal|privacy|terms|challenge|web|emails|settings|your_activity)$/i.test(ig[1]);
+      }
+      if (host !== "facebook.com" && host !== "fb.com") return false;
+      if (path === "/profile.php") return /^\d+$/.test(url.searchParams.get("id") || "");
+      if (/^\/(people|pages)\/[^/]+\/\d+(?:\/(reels|videos|posts))?$/i.test(path)) return true;
+      var fb = path.match(/^\/([A-Za-z0-9._-]+)(?:\/(reels|videos|posts))?$/i);
+      return !!fb && !/^(watch|reel|reels|share|groups|marketplace|gaming|home|search|friends|notifications|messages|settings|help|login|photo|photos|video|videos|events|stories|saved|bookmarks|pages|people|privacy|policies|recover|checkpoint|dialog|plugins|business|ads)$/i.test(fb[1]);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  globalThis.C2VCounts = { parse: parse, fbEngagement: fbEngagement, fbViews: fbViews, isProfilePage: isProfilePage,
+    igVideoSelector: IG_VIDEO_SELECTOR, igVideoId: igVideoId, igVideoIds: igVideoIds, igViews: igViews, igViewsForLink: igViewsForLink };
 })();
